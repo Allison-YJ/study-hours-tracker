@@ -9,31 +9,43 @@ const API = {
   RESULTS: 'http://localhost:8081'
 };
 
-// --- MOCK SERVICE LOGIC ---
+// --- MOCK SERVICE LOGIC (Updated to match new schema) ---
 const getMockData = () => {
   const sessions = JSON.parse(localStorage.getItem('mock_sessions') || '[]');
   if (sessions.length === 0) return null;
 
   const totalMinutes = sessions.reduce((sum: number, s: any) => sum + s.duration_minutes, 0);
   const subjects: any = {};
-  const dates = new Set();
   let maxSession = 0;
+  let minSession = Infinity;
 
   sessions.forEach((s: any) => {
-    subjects[s.subject] = (subjects[s.subject] || 0) + s.duration_minutes;
-    dates.add(s.study_date);
+    if (!subjects[s.subject]) {
+      subjects[s.subject] = { total: 0, count: 0, max: 0, min: Infinity };
+    }
+    subjects[s.subject].total += s.duration_minutes;
+    subjects[s.subject].count += 1;
+    if (s.duration_minutes > subjects[s.subject].max) subjects[s.subject].max = s.duration_minutes;
+    if (s.duration_minutes < subjects[s.subject].min) subjects[s.subject].min = s.duration_minutes;
+    
     if (s.duration_minutes > maxSession) maxSession = s.duration_minutes;
+    if (s.duration_minutes < minSession) minSession = s.duration_minutes;
   });
 
   return {
     username: 'demo_user',
-    metrics: {
-      total_minutes: totalMinutes,
-      avg_minutes_per_day: totalMinutes / (dates.size || 1),
-      max_session: maxSession,
-      session_count: sessions.length
-    },
-    subject_breakdown: Object.keys(subjects).map(k => ({ subject: k, minutes: subjects[k] })),
+    total_minutes: totalMinutes,
+    total_sessions: sessions.length,
+    max_session: maxSession,
+    min_session: minSession === Infinity ? 0 : minSession,
+    subject_stats: Object.keys(subjects).map(k => ({
+      subject: k,
+      total_minutes: subjects[k].total,
+      average_minutes: subjects[k].total / subjects[k].count,
+      max_session: subjects[k].max,
+      min_session: subjects[k].min,
+      session_count: subjects[k].count
+    })),
     last_updated: new Date().toISOString()
   };
 };
@@ -239,38 +251,42 @@ const App: React.FC = () => {
               <tbody>
                 <tr>
                   <td>Total Minutes</td>
-                  <td>{analytics?.metrics.total_minutes || 0}</td>
-                </tr>
-                <tr>
-                  <td>Daily Average</td>
-                  <td>{analytics?.metrics.avg_minutes_per_day?.toFixed(2) || 0} min</td>
+                  <td>{analytics?.total_minutes || 0}</td>
                 </tr>
                 <tr>
                   <td>Longest Session</td>
-                  <td>{analytics?.metrics.max_session || 0} min</td>
+                  <td>{analytics?.max_session || 0} min</td>
+                </tr>
+                <tr>
+                  <td>Shortest Session</td>
+                  <td>{analytics?.min_session || 0} min</td>
                 </tr>
                 <tr>
                   <td>Total Sessions</td>
-                  <td>{analytics?.metrics.session_count || 0}</td>
+                  <td>{analytics?.total_sessions || 0}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h3>Breakdown by Subject</h3>
-          {analytics?.subject_breakdown && analytics.subject_breakdown.length > 0 ? (
+          <h3>Average Minutes by Subject</h3>
+          {analytics?.subject_stats && analytics.subject_stats.length > 0 ? (
             <table>
               <thead>
                 <tr>
                   <th>Subject</th>
+                  <th>Average Minutes</th>
                   <th>Total Minutes</th>
+                  <th>Sessions</th>
                 </tr>
               </thead>
               <tbody>
-                {analytics.subject_breakdown.map((item: any, idx: number) => (
+                {analytics.subject_stats.map((item: any, idx: number) => (
                   <tr key={idx}>
                     <td>{item.subject}</td>
-                    <td>{item.minutes}</td>
+                    <td>{item.average_minutes.toFixed(2)}</td>
+                    <td>{item.total_minutes}</td>
+                    <td>{item.session_count}</td>
                   </tr>
                 ))}
               </tbody>
