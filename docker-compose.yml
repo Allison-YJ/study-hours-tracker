@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # The User Interface
+  frontend:
+    build: .
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth-service
+      - enter-data
+      - show-results
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: study_tracker
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  mongodb:
+    image: mongo:6.0
+    restart: always
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      timeout: 20s
+      retries: 10
+
+  auth-service:
+    build: ./auth-service
+    restart: always
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root_password
+      MYSQL_DB: study_tracker
+      JWT_SECRET: super_secure_study_secret
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  enter-data:
+    build: ./enter-data
+    restart: always
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root_password
+      MYSQL_DB: study_tracker
+      AUTH_SERVICE_URL: http://auth-service:8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
+  show-results:
+    build: ./show-results
+    restart: always
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/study_tracker
+      AUTH_SERVICE_URL: http://auth-service:8082
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+
+  analytics-service:
+    build: ./analytics-service
+    restart: always
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root_password
+      MYSQL_DB: study_tracker
+      MONGO_URI: mongodb://mongodb:27017/study_tracker
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy

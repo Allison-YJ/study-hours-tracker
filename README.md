@@ -1,11 +1,40 @@
-<div align="center">
+# Study Hours Tracker - Microservices System
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+A complete, containerized microservices application for tracking study habits, featuring a React frontend, Python analytics engine, and dedicated services for authentication and data entry.
 
-  <h1>Built with AI Studio</h2>
+## 📁 Repository Structure
+```text
+├── auth-service/        # Python (FastAPI) - User Authentication
+├── analytics-service/   # Python (Worker) - Data Aggregator
+├── enter-data/          # Node.js (Express) - MySQL Data Entry
+├── show-results/        # Node.js (Express) - MongoDB Analytics Provider
+├── mysql-init/          # Database seeding (demo/demo1234)
+├── App.tsx              # React Frontend (Tailwind + Recharts)
+├── docker-compose.yml   # Full system orchestration
+└── README.md            # You are here
+```
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 🚀 How to Run (Docker)
+1. **Clone the Repo**
+2. **Launch everything**:
+   ```bash
+   docker compose up --build
+   ```
+3. **Access the App**:
+   - Open your browser to: [http://localhost:3000](http://localhost:3000)
+4. **Login**:
+   - Username: `demo`
+   - Password: `demo1234`
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 🧪 Tech Stack
+- **Frontend**: React, Tailwind CSS, Recharts.
+- **Backend APIs**: Node.js (Express), Python (FastAPI).
+- **Background Engine**: Python.
+- **Databases**: MySQL 8.0 (Raw), MongoDB 6.0 (Aggregated).
+- **Orchestration**: Docker & Docker Compose.
 
-</div>
+## 🛠 Features
+- **Secure Auth**: JWT based authentication.
+- **Polyglot Architecture**: Uses both Python and JavaScript in one system.
+- **High Performance**: Pre-computes analytics into MongoDB so the UI stays fast as your data grows.
+- **Responsive UI**: Works perfectly on mobile and desktop.

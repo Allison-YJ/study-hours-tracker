@@ -1,0 +1,5 @@
+{
+  "name": " Study Hours Tracker Microservices",
+  "description": "A containerized study hour tracking system with a Node.js frontend, Python analytics engine, and microservices for authentication and data entry.",
+  "requestFramePermissions": []
+}
