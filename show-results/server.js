@@ -18,8 +18,23 @@ app.get('/analytics', async (req, res) => {
         const data = await client.db().collection('analytics').findOne({ user_id: auth.data.user_id });
         await client.close();
         
-        res.json(data || { username: auth.data.username, metrics: { total_minutes: 0, avg_minutes_per_day: 0, min_session: 0, max_session: 0, session_count: 0 }, subject_breakdown: [] });
+        // Ensure fallback matches the frontend expectations
+        res.json(data || { 
+            username: auth.data.username, 
+            total_minutes: 0, 
+            total_sessions: 0, 
+            max_session: 0, 
+            min_session: 0, 
+            subject_stats: [],
+            metrics: { // Backward compatibility check if needed by old UI, but current App.tsx uses root props
+                total_minutes: 0,
+                session_count: 0,
+                max_session: 0,
+                min_session: 0
+            }
+        });
     } catch (e) {
+        console.error(e);
         res.status(401).json({ error: 'Auth/DB Error' });
     }
 });
